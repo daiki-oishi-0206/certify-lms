@@ -23,7 +23,7 @@ class PartPolicy
     {
         return match ($auth->role) {
             UserRole::Admin => true,
-            UserRole::Coach => false,
+            UserRole::Coach => $certification->coaches->contains('id', $auth->id),
             default => false,
         };
     }
@@ -32,7 +32,8 @@ class PartPolicy
     {
         return match ($auth->role) {
             UserRole::Admin => true,
-            UserRole::Coach => false,
+            UserRole::Coach => $part->certification->coaches
+                ->contains('id', $auth->id),
             default => $part->status === ContentStatus::Published,
         };
     }
@@ -71,7 +72,7 @@ class PartPolicy
     {
         return match ($auth->role) {
             UserRole::Admin => true,
-            UserRole::Coach => false,
+            UserRole::Coach => $certification->coaches->contains('id', $auth->id),
             default => false,
         };
     }
