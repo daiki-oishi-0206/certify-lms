@@ -24,7 +24,8 @@ class ChapterPolicy
     {
         return match ($auth->role) {
             UserRole::Admin => true,
-            UserRole::Coach => false,
+            UserRole::Coach => $part->certification->coaches
+                ->contains('id', $auth->id),
             default => false,
         };
     }
@@ -33,7 +34,8 @@ class ChapterPolicy
     {
         return match ($auth->role) {
             UserRole::Admin => true,
-            UserRole::Coach => false,
+            UserRole::Coach => $chapter->part->certification->coaches
+                ->contains('id', $auth->id),
             default => $chapter->status === ContentStatus::Published,
         };
     }
@@ -72,7 +74,7 @@ class ChapterPolicy
     {
         return match ($auth->role) {
             UserRole::Admin => true,
-            UserRole::Coach => false,
+            UserRole::Coach => $certification->coaches->contains('id', $auth->id),
             default => false,
         };
     }
@@ -82,3 +84,4 @@ class ChapterPolicy
         return $certification->coaches()->where('users.id', $coach->id)->exists();
     }
 }
+
