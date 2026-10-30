@@ -20,8 +20,26 @@ final class DestroyAction
     {
         DB::transaction(function () use ($image) {
             $path = $image->path;
+            $section = $image->section;
+
+            $imageUrl = '/storage/' . $path;
+
+            $pattern = '/!\[[^\]]*\]\\\\?\(' . preg_quote($imageUrl, '/') . '\)\\\\?/';
+
+            $section->body = preg_replace(
+                $pattern,
+                '',
+                $section->body
+            ) ?? $section->body;
+
+            $section->save();
+
             $image->delete();
-            DB::afterCommit(fn () => Storage::disk('public')->delete($path));
+
+            DB::afterCommit(
+                fn () => Storage::disk('public')->delete($path)
+            );
         });
     }
 }
+
