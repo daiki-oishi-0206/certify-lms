@@ -35,7 +35,7 @@ class SectionQuestionPolicy
         }
 
         if ($auth->role === UserRole::Coach) {
-            return false;
+            return $question->section->chapter->part->certification->coaches->contains('id', $auth->id);
         }
 
         if ($question->status !== ContentStatus::Published) {
@@ -76,13 +76,9 @@ class SectionQuestionPolicy
     {
         return match ($auth->role) {
             UserRole::Admin => true,
-            UserRole::Coach => false,
+            UserRole::Coach => $certification->coaches->contains('id', $auth->id),
             default => false,
         };
     }
 
-    private function assignedCoach(User $coach, Certification $certification): bool
-    {
-        return $certification->coaches()->where('users.id', $coach->id)->exists();
-    }
 }
