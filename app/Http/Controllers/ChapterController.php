@@ -95,3 +95,4 @@ class ChapterController extends Controller
             ->with('success', '並び順を更新しました。');
     }
 }
+

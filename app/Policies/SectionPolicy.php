@@ -24,7 +24,8 @@ class SectionPolicy
     {
         return match ($auth->role) {
             UserRole::Admin => true,
-            UserRole::Coach => false,
+            UserRole::Coach => $chapter->part->certification->coaches
+                ->contains('id', $auth->id),
             default => false,
         };
     }
@@ -36,7 +37,8 @@ class SectionPolicy
         }
 
         if ($auth->role === UserRole::Coach) {
-            return false;
+            return $section->chapter->part->certification->coaches
+                ->contains('id', $auth->id);
         }
 
         return $section->status === ContentStatus::Published
@@ -83,7 +85,7 @@ class SectionPolicy
     {
         return match ($auth->role) {
             UserRole::Admin => true,
-            UserRole::Coach => false,
+            UserRole::Coach => $certification->coaches->contains('id', $auth->id),
             default => false,
         };
     }
