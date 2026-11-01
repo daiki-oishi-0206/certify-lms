@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\UseCases\Learning;
 
+use App\Enums\CertificationStatus;
 use App\Enums\ContentStatus;
 use App\Models\Part;
 use App\Models\User;
@@ -25,6 +26,15 @@ final class ShowPartAction
     public function __invoke(Part $part, User $student): array
     {
         $part->loadMissing('certification');
+
+        $certification = $part->certification;
+
+        if (
+            $certification === null
+            || $certification->status !== CertificationStatus::Published
+        ) {
+            throw new NotFoundHttpException;
+        }
 
         if ($part->status !== ContentStatus::Published) {
             throw new NotFoundHttpException;
