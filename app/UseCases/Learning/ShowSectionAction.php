@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\UseCases\Learning;
 
+use App\Enums\CertificationStatus;
 use App\Enums\ContentStatus;
 use App\Models\Section;
 use App\Models\SectionProgress;
@@ -33,6 +34,15 @@ final class ShowSectionAction
         $section->loadMissing('chapter.part.certification');
         $chapter = $section->chapter;
         $part = $chapter?->part;
+
+        $certification = $part?->certification;
+
+        if (
+            $certification === null
+            || $certification->status !== CertificationStatus::Published
+        ) {
+            throw new NotFoundHttpException;
+        }
 
         if ($section->status !== ContentStatus::Published
             || $chapter === null || $chapter->status !== ContentStatus::Published
