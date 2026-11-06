@@ -69,6 +69,7 @@ final class OnboardAction
                 'password' => Hash::make($validated['password']),
                 'profile_setup_completed' => true,
                 'email_verified_at' => $now,
+                'status' => UserStatus::InProgress,
             ];
 
             // 受講生のみ Plan 期間を確定。コーチは受講期間という業務概念を持たない。
@@ -90,6 +91,10 @@ final class OnboardAction
             );
 
             $user->forceFill($attrs)->save();
+
+            $invitation->forceFill([
+                'status' => InvitationStatus::Accepted,
+            ])->save();
 
             // 面談クォータは受講生固有の消費対象。コーチは面談を提供する側のため初期付与しない。
             if ($user->role === UserRole::Student && $user->plan->default_meeting_quota > 0) {
