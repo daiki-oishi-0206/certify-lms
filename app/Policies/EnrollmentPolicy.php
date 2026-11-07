@@ -38,6 +38,16 @@ class EnrollmentPolicy
         };
     }
 
+    public function viewLearningContent(User $user, Enrollment $enrollment): bool
+    {
+        return $user->role === UserRole::Student
+            && $enrollment->user_id === $user->id
+            && in_array($enrollment->status, [
+                EnrollmentStatus::Learning,
+                EnrollmentStatus::Passed,
+            ], true);
+    }
+
     public function viewAdmin(User $user): bool
     {
         return $user->role === UserRole::Admin;
