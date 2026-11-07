@@ -8,6 +8,7 @@ use App\Models\Chapter;
 use App\Models\Enrollment;
 use App\Models\Part;
 use App\Models\Section;
+use App\Models\User;
 use App\UseCases\Learning\IndexAction;
 use App\UseCases\Learning\ShowChapterAction;
 use App\UseCases\Learning\ShowEnrollmentAction;
@@ -42,16 +43,45 @@ class BrowseController extends Controller
 
     public function showPart(Part $part, ShowPartAction $action): View
     {
+        $this->authorizeLearningContent(auth()->user(), $part->certification_id);
+
         return view('learning.parts.show', $action($part, auth()->user()));
     }
 
     public function showChapter(Chapter $chapter, ShowChapterAction $action): View
     {
+        $chapter->loadMissing('part');
+
+        $this->authorizeLearningContent(
+            auth()->user(),
+            $chapter->part?->certification_id
+        );
+
         return view('learning.chapters.show', $action($chapter, auth()->user()));
     }
 
     public function showSection(Section $section, ShowSectionAction $action): View
     {
+        $section->loadMissing('chapter.part');
+        
+        $this->authorizeLearningContent(
+            auth()->user(),
+            $section->chapter?->part?->certification_id
+        );
+
         return view('learning.sections.show', $action($section, auth()->user()));
+    }
+
+    private function authorizeLearningContent(User $student, ?string $certificationId): void
+    {
+        abort_if($certificationId === null, 404);
+
+        $enrollment = $student->enrollments()
+            ->where('certification_id', $certificationId)
+            ->first();
+
+        abort_if($enrollment === null, 403);
+
+        $this->authorize('viewLearningContent', $enrollment);
     }
 }
