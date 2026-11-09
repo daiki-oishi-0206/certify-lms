@@ -233,7 +233,7 @@ class MeetingController extends Controller
 
         $actor = auth()->user();
 
-        DB::transaction(function () use ($meeting, $actor) {
+        DB::transaction(function () use ($meeting, $actor, $refundAction) {
             $locked = Meeting::query()->whereKey($meeting->id)->lockForUpdate()->first();
             if ($locked === null || $locked->status !== MeetingStatus::Reserved) {
                 throw MeetingStatusTransitionException::forCancel();
@@ -242,6 +242,8 @@ class MeetingController extends Controller
             if ($locked->scheduled_at->lessThanOrEqualTo(now())) {
                 throw new MeetingAlreadyStartedException;
             }
+
+            $refundAction($locked->student, (string) $locked->id);
 
             $locked->update([
                 'status' => MeetingStatus::Canceled->value,
