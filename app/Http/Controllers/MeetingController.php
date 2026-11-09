@@ -243,7 +243,7 @@ class MeetingController extends Controller
                 throw new MeetingAlreadyStartedException;
             }
 
-            $refundAction($actor, (string) $locked->id);
+            $refundAction($locked->student, (string) $locked->id);
 
             $locked->update([
                 'status' => MeetingStatus::Canceled->value,
