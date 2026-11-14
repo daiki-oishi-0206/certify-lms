@@ -29,7 +29,7 @@ class OnboardingRequest extends FormRequest
         $rules = [
             'name' => ['required', 'string', 'max:50'],
             'bio' => ['nullable', 'string', 'max:1000'],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ];
 
         if ($this->invitedRole() === UserRole::Coach) {
@@ -61,6 +61,7 @@ class OnboardingRequest extends FormRequest
         return [
             'meeting_url.required' => 'ミーティング URL を入力してください。',
             'meeting_url.url' => 'ミーティング URL を正しい形式で入力してください。',
+            'password.confirmed' => 'パスワードと確認用パスワードが一致しません。',
         ];
     }
 
