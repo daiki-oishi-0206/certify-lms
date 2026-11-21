@@ -442,6 +442,7 @@ Route::middleware(['auth', 'role:student,coach', 'active-learning'])
         Route::post('{thread}/replies', [QaBoardController::class, 'storeReply'])->name('replies.store');
         Route::patch('replies/{reply}', [QaBoardController::class, 'updateReply'])->name('replies.update');
         Route::delete('replies/{reply}', [QaBoardController::class, 'destroyReply'])->name('replies.destroy');
+        Route::get('replies/{reply}/edit', [QaBoardController::class, 'editReply'])->name('replies.edit');
     });
 
 // ============================================================
