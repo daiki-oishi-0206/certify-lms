@@ -41,6 +41,8 @@ use App\Http\Controllers\Settings\SettingsDefaultEnrollmentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WeakDrillController;
 use App\Http\Controllers\WeakDrillResultController;
+use App\Http\Controllers\QaBoardController;
+use App\Http\Controllers\Admin\QaBoardController as AdminQaBoardController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -417,6 +419,32 @@ Route::middleware(['auth', 'role:student,coach', 'active-learning'])->group(func
 });
 
 // ============================================================
+// 受講生・コーチ共有 — Q&Aボード
+// ============================================================
+Route::middleware(['auth', 'role:student,coach', 'active-learning'])
+    ->prefix('qa-board')
+    ->name('qa-board.')
+    ->group(function () {
+
+        // 受講生専用ルート
+        Route::middleware('role:student')->group(function () {
+            Route::get('create', [QaBoardController::class, 'create'])->name('create');
+            Route::post('/', [QaBoardController::class, 'store'])->name('store');
+            Route::get('{thread}/edit', [QaBoardController::class, 'edit'])->name('edit');
+            Route::put('{thread}', [QaBoardController::class, 'update'])->name('update');
+            Route::patch('{thread}/status', [QaBoardController::class, 'updateStatus'])->name('updateStatus');
+            Route::delete('{thread}', [QaBoardController::class, 'destroy'])->name('destroy');
+        });
+
+        // 共通ルート
+        Route::get('/', [QaBoardController::class, 'index'])->name('index');
+        Route::get('{thread}', [QaBoardController::class, 'show'])->name('show');
+        Route::post('{thread}/replies', [QaBoardController::class, 'storeReply'])->name('replies.store');
+        Route::patch('replies/{reply}', [QaBoardController::class, 'updateReply'])->name('replies.update');
+        Route::delete('replies/{reply}', [QaBoardController::class, 'destroyReply'])->name('replies.destroy');
+    });
+
+// ============================================================
 // コーチ専用 — chat 未読あり一覧
 // ============================================================
 Route::middleware(['auth', 'role:coach', 'active-learning'])->group(function () {
@@ -432,6 +460,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
         ->name('admin.chat-rooms.index');
     Route::get('chat-rooms/{room}', [ChatRoomController::class, 'show'])
         ->name('admin.chat-rooms.show');
+    // Q&Aボード管理
+    Route::prefix('qa-board')->name('admin.qa-board.')->group(function () {
+        Route::get('/', [AdminQaBoardController::class, 'index'])->name('index');
+        Route::get('{thread}', [AdminQaBoardController::class, 'show'])->name('show');
+        Route::delete('{thread}', [AdminQaBoardController::class, 'destroy'])->name('destroy');
+        Route::delete('replies/{reply}', [AdminQaBoardController::class, 'destroyReply'])->name('replies.destroy');
+    });
 });
 
 // ============================================================
