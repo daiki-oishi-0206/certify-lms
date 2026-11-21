@@ -4,18 +4,16 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\QaBoard;
 
-use App\Models\Certification;
-use App\Models\QaThread;
+use App\Enums\UserRole;
+use App\Enums\UserStatus;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreThreadRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $certification = Certification::find($this->input('certification_id'));
-
-        return $certification !== null
-            && ($this->user()?->can('create', [QaThread::class, $certification]) ?? false);
+        return $this->user()?->role === UserRole::Student
+            && $this->user()?->status === UserStatus::InProgress;
     }
 
     /**

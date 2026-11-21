@@ -90,6 +90,10 @@ class QaBoardController extends Controller
     ): RedirectResponse {
         $data = $request->validated();
 
+        $certification = Certification::findOrFail($data['certification_id']);
+
+        $this->authorize('create', [QaThread::class, $certification]);
+        
         $thread = $action(
             $request->user(),
             $data['certification_id'],
