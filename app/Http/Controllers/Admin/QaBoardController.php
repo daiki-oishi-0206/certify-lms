@@ -4,57 +4,67 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
+use App\Enums\CertificationStatus;
 use App\Enums\QaThreadStatus;
-use App\Models\QaThread;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\QaBoard\IndexThreadRequest;
+use App\Models\Certification;
 use App\Models\QaReply;
-use App\UseCases\QaBoard\IndexAction;
-use App\UseCases\QaBoard\ShowAction;
+use App\Models\QaThread;
 use App\UseCases\QaBoard\DeleteAction;
 use App\UseCases\QaBoard\DeleteReplyAction;
-use App\Http\Requests\QaBoard\IndexThreadRequest;
-use Illuminate\View\View;
+use App\UseCases\QaBoard\IndexAction;
+use App\UseCases\QaBoard\ShowAction;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class QaBoardController extends Controller
 {
-    /**
-     * 管理者向けQ&A掲示板一覧を表示する。
-     */
-    public function index(IndexThreadRequest $request, IndexAction $action): View
-    {
+    public function index(
+        IndexThreadRequest $request,
+        IndexAction $action,
+    ): View {
+        $filters = $request->filters();
+
+        $status = $filters['status'] !== null
+            ? QaThreadStatus::from($filters['status'])
+            : null;
+
         $threads = $action(
             $request->user(),
-            $request->input('keyword'),
-            $request->input('certification_id'),
-            $request->input('status')
-                ? QaThreadStatus::from($request->input('status'))
-                : null,
+            $filters['keyword'],
+            $filters['certification_id'],
+            $status,
         );
 
-        return view('admin.qa-board.index', [
+        $certifications = Certification::query()
+            ->orderBy('name')
+            ->get();
+
+        return view('qa-thread.index', [
             'threads' => $threads,
+            'filters' => $filters,
+            'certifications' => $certifications,
+            'publishedStatus' => CertificationStatus::Published,
         ]);
     }
 
-    /**
-     * 管理者向けQ&Aスレッド詳細を表示する。
-     */
-    public function show(QaThread $thread, ShowAction $action): View
-    {
+    public function show(
+        QaThread $thread,
+        ShowAction $action,
+    ): View {
         $thread = $action($thread);
 
-        return view('admin.qa-board.show', [
+        return view('qa-thread.show', [
             'thread' => $thread,
             'replies' => $thread->replies,
         ]);
     }
 
-    /**
-     * 管理者がQ&Aスレッドを削除する。
-     */
-    public function destroy(QaThread $thread, DeleteAction $action): RedirectResponse
-    {
+    public function destroy(
+        QaThread $thread,
+        DeleteAction $action,
+    ): RedirectResponse {
         $action($thread);
 
         return redirect()
@@ -62,12 +72,9 @@ class QaBoardController extends Controller
             ->with('success', '質問を削除しました。');
     }
 
-    /**
-     * 管理者がQ&A返信を削除する。
-     */
     public function destroyReply(
         QaReply $reply,
-        DeleteReplyAction $action
+        DeleteReplyAction $action,
     ): RedirectResponse {
         $thread = $reply->qaThread;
 

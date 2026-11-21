@@ -52,9 +52,16 @@ class QaBoardController extends Controller
             $status,
         );
 
-        return view('qa-board.index', [
+        $certifications = Certification::query()
+            ->where('status', CertificationStatus::Published)
+            ->orderBy('name')
+            ->get();
+
+        return view('qa-thread.index', [
             'threads' => $threads,
             'filters' => $filters,
+            'certifications' => $certifications,
+            'publishedStatus' => CertificationStatus::Published,
         ]);
     }
 
@@ -66,7 +73,7 @@ class QaBoardController extends Controller
 
         $thread = $action($thread);
 
-        return view('qa-board.show', [
+        return view('qa-thread.show', [
             'thread' => $thread,
             'replies' => $thread->replies,
         ]);
@@ -79,7 +86,7 @@ class QaBoardController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('qa-board.create', [
+        return view('qa-thread.create', [
             'certifications' => $certifications,
         ]);
     }
@@ -93,7 +100,7 @@ class QaBoardController extends Controller
         $certification = Certification::findOrFail($data['certification_id']);
 
         $this->authorize('create', [QaThread::class, $certification]);
-        
+
         $thread = $action(
             $request->user(),
             $data['certification_id'],
@@ -110,7 +117,7 @@ class QaBoardController extends Controller
     {
         $this->authorize('update', $thread);
 
-        return view('qa-board.edit', [
+        return view('qa-thread.edit', [
             'thread' => $thread,
         ]);
     }
@@ -186,7 +193,7 @@ class QaBoardController extends Controller
     {
         $this->authorize('update', $reply);
 
-        return view('qa-board.replies.edit', [
+        return view('qa-thread.reply-edit', [
             'reply' => $reply,
         ]);
     }

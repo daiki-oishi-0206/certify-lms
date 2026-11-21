@@ -50,11 +50,12 @@ class QaThreadPolicy
         };
     }
 
-    public function create(User $user, Certification $certification): bool
+    public function create(User $user, ?Certification $certification = null): bool
     {
         return $user->role === UserRole::Student
             && $user->status === UserStatus::InProgress
-            && $certification->status === CertificationStatus::Published;
+            && ($certification === null
+                || $certification->status === CertificationStatus::Published);
     }
 
     public function update(User $user, QaThread $thread): bool
