@@ -197,8 +197,11 @@ class QaBoardController extends Controller
     {
         $this->authorize('update', $reply);
 
+        $thread = $reply->thread;
+
         return view('qa-thread.reply-edit', [
             'reply' => $reply,
+            'thread' => $thread,
         ]);
     }
 
@@ -212,7 +215,7 @@ class QaBoardController extends Controller
         $action($reply, $data['body']);
 
         return redirect()
-            ->route('qa-board.show', $reply->qaThread)
+            ->route('qa-board.show', $reply->thread)
             ->with('success', '回答を更新しました。');
     }
 
@@ -222,7 +225,7 @@ class QaBoardController extends Controller
     ): RedirectResponse {
         $this->authorize('delete', $reply);
 
-        $thread = $reply->qaThread;
+        $thread = $reply->thread;
 
         $action($reply);
 

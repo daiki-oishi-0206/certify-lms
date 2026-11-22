@@ -76,7 +76,7 @@ class QaBoardController extends Controller
         QaReply $reply,
         DeleteReplyAction $action,
     ): RedirectResponse {
-        $thread = $reply->qaThread;
+        $thread = $reply->thread;
 
         $action($reply);
 
