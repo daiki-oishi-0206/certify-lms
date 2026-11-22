@@ -20,13 +20,9 @@ class QaSeeder extends Seeder
             ->where('email', 'student@certify-lms.test')
             ->first();
 
-        $coach = User::query()
-            ->where('email', 'coach@certify-lms.test')
-            ->first();
-
-        if ($student === null || $coach === null) {
+        if ($student === null) {
             $this->command?->warn(
-                'QaSeeder: 固定の受講生またはコーチが存在しません。'
+                'QaSeeder: 固定の受講生が存在しません。'
             );
 
             return;
@@ -34,6 +30,7 @@ class QaSeeder extends Seeder
 
         $certifications = Certification::query()
             ->where('status', CertificationStatus::Published->value)
+            ->with('coaches')
             ->orderBy('created_at')
             ->get();
 
@@ -45,8 +42,21 @@ class QaSeeder extends Seeder
             return;
         }
 
+        if ($certifications->contains(
+            fn(Certification $certification) => $certification->coaches->isEmpty()
+        )) {
+            $this->command?->warn(
+                'QaSeeder: 担当コーチが設定されていない資格があります。'
+            );
+
+            return;
+        }
+
         // 既存データがある場合は重複作成しない
-        if (QaThread::query()->exists()) {
+        if (
+            QaThread::query()->exists()
+            || QaReply::query()->exists()
+        ) {
             $this->command?->info(
                 'QaSeeder: Q&Aデータが既に存在するためスキップします。'
             );
@@ -54,68 +64,57 @@ class QaSeeder extends Seeder
             return;
         }
 
-        $threadData = [
-            [
-                'title' => 'アルゴリズムの学習方法について',
-                'body' => 'アルゴリズムの問題を解くとき、どこから考え始めればよいか分かりません。',
-                'resolved' => false,
-                'replies' => [
-                    ['user' => $coach, 'body' => 'まずは問題文から入力と出力を整理してみましょう。'],
-                    ['user' => $student, 'body' => 'ありがとうございます。入力と出力を整理するところから始めます。'],
-                ],
-            ],
-            [
-                'title' => '試験範囲の優先順位について',
-                'body' => '試験範囲が広く、どの分野から勉強すればよいか迷っています。',
-                'resolved' => true,
-                'replies' => [
-                    ['user' => $coach, 'body' => 'まずは出題頻度の高い分野から取り組むのがおすすめです。'],
-                ],
-            ],
-            [
-                'title' => 'リスニングの勉強方法について',
-                'body' => '音声を聞いても内容を理解できないことがあります。効果的な練習方法を知りたいです。',
-                'resolved' => false,
-                'replies' => [
-                    ['user' => $coach, 'body' => '短い音声を繰り返し聞き、スクリプトと照らし合わせてみましょう。'],
-                    ['user' => $student, 'body' => 'シャドーイングも試してみます。'],
-                    ['user' => $coach, 'body' => '最初はゆっくりした音声から始めるとよいですよ。'],
-                ],
-            ],
-            [
-                'title' => '仕訳の覚え方について',
-                'body' => '仕訳のパターンがなかなか覚えられません。効率的な覚え方はありますか？',
-                'resolved' => true,
-                'replies' => [],
-            ],
-            [
-                'title' => '試験直前の復習について',
-                'body' => '試験直前は新しい問題を解くべきか、今までの復習を優先すべきか悩んでいます。',
-                'resolved' => false,
-                'replies' => [
-                    ['user' => $coach, 'body' => '直前期は間違えた問題の復習を優先しましょう。'],
-                ],
-            ],
+        $topics = [
+            'アルゴリズムの学習方法について',
+            '試験範囲の優先順位について',
+            'リスニングの勉強方法について',
+            '仕訳の覚え方について',
+            '試験直前の復習について',
+            '過去問題の取り組み方について',
+            '苦手分野の克服方法について',
+            '模擬試験の活用方法について',
+            '学習時間の確保について',
+            '試験当日の注意点について',
         ];
 
-        foreach ($threadData as $index => $data) {
-            $certification = $certifications->get($index);
+        $bodies = [
+            '効率よく学習を進めるための方法について教えてください。',
+            'どのような順番で勉強を進めるのがおすすめでしょうか。',
+            '理解が難しい部分があり、具体的な勉強方法を知りたいです。',
+            '繰り返し学習していますが、なかなか定着しません。',
+            '試験に向けて、今のうちに確認しておくべきことはありますか。',
+        ];
 
-            if ($certification === null) {
-                break;
-            }
+        // 0件・1件・2件・3件の回答を繰り返し設定
+        $replyCounts = [0, 1, 2, 3, 0, 2, 1, 3, 0, 1];
 
-            $createdAt = now()->subDays(10 - $index * 2);
+        for ($index = 0; $index < 40; $index++) {
+            // 公開済み資格5件に各8件ずつ質問を割り当てる
+            $certification = $certifications->get(
+                intdiv($index, 8) % $certifications->count()
+            );
+
+            // 資格の担当コーチを取得
+            $assignedCoach = $certification->coaches->first();
+
+            // 作成日時にばらつきを持たせる
+            $createdAt = now()
+                ->subDays(($index * 7) % 30)
+                ->subHours(($index * 5) % 24);
+
+            // 未解決・解決済みを交互に設定
+            $resolved = $index % 2 === 0;
 
             $thread = QaThread::factory()->create([
                 'certification_id' => $certification->id,
                 'user_id' => $student->id,
-                'title' => $data['title'],
-                'body' => $data['body'],
-                'status' => $data['resolved']
+                'title' => $topics[$index % count($topics)]
+                    . '（確認用 ' . ($index + 1) . '）',
+                'body' => $bodies[$index % count($bodies)],
+                'status' => $resolved
                     ? QaThreadStatus::Resolved->value
                     : QaThreadStatus::Unresolved->value,
-                'resolved_at' => $data['resolved']
+                'resolved_at' => $resolved
                     ? $createdAt->copy()->addHours(2)
                     : null,
             ]);
@@ -125,14 +124,23 @@ class QaSeeder extends Seeder
                 'updated_at' => $createdAt,
             ])->save();
 
-            foreach ($data['replies'] as $replyIndex => $replyData) {
+            $replyCount = $replyCounts[$index % count($replyCounts)];
+
+            for ($replyIndex = 0; $replyIndex < $replyCount; $replyIndex++) {
+                // 担当コーチ・受講生の回答を交互に作成
+                $replyUser = $replyIndex % 2 === 0
+                    ? $assignedCoach
+                    : $student;
+
                 $replyCreatedAt = $createdAt->copy()
                     ->addHours($replyIndex + 1);
 
                 $reply = QaReply::factory()->create([
                     'qa_thread_id' => $thread->id,
-                    'user_id' => $replyData['user']->id,
-                    'body' => $replyData['body'],
+                    'user_id' => $replyUser->id,
+                    'body' => $replyIndex % 2 === 0
+                        ? '具体的な学習方法を確認しながら進めてみましょう。'
+                        : 'ありがとうございます。参考にして取り組んでみます。',
                 ]);
 
                 $reply->forceFill([
@@ -141,5 +149,9 @@ class QaSeeder extends Seeder
                 ])->save();
             }
         }
+
+        $this->command?->info(
+            'QaSeeder: Q&A質問40件を作成しました。'
+        );
     }
 }
