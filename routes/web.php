@@ -431,8 +431,9 @@ Route::middleware(['auth', 'role:student,coach', 'active-learning'])
             Route::get('create', [QaBoardController::class, 'create'])->name('create');
             Route::post('/', [QaBoardController::class, 'store'])->name('store');
             Route::get('{thread}/edit', [QaBoardController::class, 'edit'])->name('edit');
-            Route::put('{thread}', [QaBoardController::class, 'update'])->name('update');
-            Route::patch('{thread}/status', [QaBoardController::class, 'updateStatus'])->name('updateStatus');
+            Route::match(['put', 'patch'], '{thread}', [QaBoardController::class, 'update'])->name('update');
+            Route::post('{thread}/resolve', [QaBoardController::class, 'resolve'])->name('resolve');
+            Route::post('{thread}/unresolve', [QaBoardController::class, 'unresolve'])->name('unresolve');
             Route::delete('{thread}', [QaBoardController::class, 'destroy'])->name('destroy');
         });
 

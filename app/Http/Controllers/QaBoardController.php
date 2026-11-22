@@ -10,7 +10,6 @@ use Illuminate\Http\RedirectResponse;
 use App\Http\Requests\QaBoard\IndexThreadRequest;
 use App\Http\Requests\QaBoard\StoreThreadRequest;
 use App\Http\Requests\QaBoard\UpdateThreadRequest;
-use App\Http\Requests\QaBoard\UpdateThreadStatusRequest;
 use App\Http\Requests\QaBoard\StoreReplyRequest;
 use App\Http\Requests\QaBoard\UpdateReplyRequest;
 use App\Models\QaThread;
@@ -140,26 +139,30 @@ class QaBoardController extends Controller
             ->with('success', '質問を更新しました。');
     }
 
-    public function updateStatus(
+    public function resolve(
         QaThread $thread,
-        UpdateThreadStatusRequest $request,
         UpdateStatusAction $action,
     ): RedirectResponse {
-        $data = $request->validated();
-
-        $status = QaThreadStatus::from($data['status']);
-
         $this->authorize('resolve', $thread);
 
-        $action($thread, $status);
-
-        $message = $status === QaThreadStatus::Resolved
-            ? '質問を解決済にマークしました。'
-            : '質問を未解決に戻しました。';
+        $action($thread, QaThreadStatus::Resolved);
 
         return redirect()
             ->route('qa-board.show', $thread)
-            ->with('success', $message);
+            ->with('success', '質問を解決済にマークしました。');
+    }
+
+    public function unresolve(
+        QaThread $thread,
+        UpdateStatusAction $action,
+    ): RedirectResponse {
+        $this->authorize('unresolve', $thread);
+
+        $action($thread, QaThreadStatus::Unresolved);
+
+        return redirect()
+            ->route('qa-board.show', $thread)
+            ->with('success', '質問を未解決に戻しました。');
     }
 
     public function destroy(

@@ -468,9 +468,7 @@ class QaBoardControllerTest extends TestCase
             ]);
 
         $response = $this->actingAs($student)
-            ->patch(route('qa-board.updateStatus', $thread), [
-                'status' => QaThreadStatus::Resolved->value,
-            ]);
+            ->post(route('qa-board.resolve', $thread));
 
         $response->assertRedirect(route('qa-board.show', $thread))
             ->assertSessionHas('success', '質問を解決済にマークしました。');
@@ -494,9 +492,7 @@ class QaBoardControllerTest extends TestCase
             ->create();
 
         $response = $this->actingAs($student)
-            ->patch(route('qa-board.updateStatus', $thread), [
-                'status' => QaThreadStatus::Unresolved->value,
-            ]);
+            ->post(route('qa-board.unresolve', $thread));
 
         $response->assertRedirect(route('qa-board.show', $thread))
             ->assertSessionHas('success', '質問を未解決に戻しました。');
