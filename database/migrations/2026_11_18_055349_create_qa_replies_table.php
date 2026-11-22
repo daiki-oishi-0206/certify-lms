@@ -14,12 +14,10 @@ return new class extends Migration
             $table->ulid('id')->primary();
 
             $table->foreignUlid('qa_thread_id')
-                ->constrained('qa_threads')
-                ->cascadeOnDelete();
+                ->constrained('qa_threads');
 
             $table->foreignUlid('user_id')
-                ->constrained('users')
-                ->restrictOnDelete();
+                ->constrained('users');
 
             $table->text('body');
             $table->timestamps();

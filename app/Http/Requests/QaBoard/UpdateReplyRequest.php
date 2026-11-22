@@ -23,7 +23,7 @@ class UpdateReplyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'body' => ['required', 'string', 'max:2000'],
+            'body' => ['required', 'string', 'max:5000'],
         ];
     }
 
@@ -44,7 +44,7 @@ class UpdateReplyRequest extends FormRequest
     {
         return [
             'body.required' => '回答本文を入力してください',
-            'body.max' => '回答本文は2000文字以内で入力してください',
+            'body.max' => '回答本文は5000文字以内で入力してください',
         ];
     }
 }

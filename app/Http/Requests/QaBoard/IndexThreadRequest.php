@@ -45,7 +45,6 @@ class IndexThreadRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'keyword.max' => 'キーワードは255文字以内で入力してください',
             'certification_id.ulid' => '選択した資格が存在しません',
             'certification_id.exists' => '選択した資格が存在しません',
             'status.enum' => '指定されたステータスは無効です',

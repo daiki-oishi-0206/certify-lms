@@ -15,12 +15,10 @@ return new class extends Migration
             $table->ulid('id')->primary();
 
             $table->foreignUlid('certification_id')
-                ->constrained('certifications')
-                ->restrictOnDelete();
+                ->constrained('certifications');
 
             $table->foreignUlid('user_id')
-                ->constrained('users')
-                ->restrictOnDelete();
+                ->constrained('users');
 
             $table->string('title', 200);
             $table->text('body');

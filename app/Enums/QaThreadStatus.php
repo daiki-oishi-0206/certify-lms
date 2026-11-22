@@ -16,7 +16,7 @@ enum QaThreadStatus: string
     {
         return match ($this) {
             self::Unresolved => '未解決',
-            self::Resolved => '解決済み',
+            self::Resolved => '解決済',
         };
     }
 }

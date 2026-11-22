@@ -153,9 +153,13 @@ class QaBoardController extends Controller
 
         $action($thread, $status);
 
+        $message = $status === QaThreadStatus::Resolved
+            ? '質問を解決済にマークしました。'
+            : '質問を未解決に戻しました。';
+
         return redirect()
             ->route('qa-board.show', $thread)
-            ->with('success', '質問のステータスを変更しました。');
+            ->with('success', $message);
     }
 
     public function destroy(
