@@ -6,7 +6,11 @@ namespace App\Http\Requests\Auth;
 
 use App\Enums\UserRole;
 use App\Models\Invitation;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\ViewErrorBag;
 
 /**
  * オンボーディングフォーム(初回パスワード設定 + プロフィール入力)のリクエスト。
@@ -73,5 +77,38 @@ class OnboardingRequest extends FormRequest
         $invitation = $this->route('invitation');
 
         return $invitation instanceof Invitation ? $invitation->role : null;
+    }
+
+    /**
+     * バリデーション失敗時は入力画面を再表示し、HTTP 422を返す。
+     */
+    protected function failedValidation(Validator $validator): void
+    {
+        $errors = $validator->errors();
+
+        session()->flashInput(
+            $this->except('password', 'password_confirmation')
+        );
+
+        $errorBag = (new ViewErrorBag())->put('default', $errors);
+
+        session()->flash('errors', $errorBag);
+
+        /** @var Invitation $invitation */
+        $invitation = $this->route('invitation');
+
+        $postUrl = URL::temporarySignedRoute(
+            'onboarding.store',
+            $invitation->expires_at,
+            ['invitation' => $invitation->id],
+        );
+
+        throw new HttpResponseException(
+            response()->view('auth.onboarding', [
+                'invitation' => $invitation,
+                'postUrl' => $postUrl,
+                'errors' => $errorBag,
+            ], 422)
+        );
     }
 }
