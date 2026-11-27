@@ -42,7 +42,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\WeakDrillController;
 use App\Http\Controllers\WeakDrillResultController;
 use App\Http\Controllers\QaBoardController;
+use App\Http\Controllers\MeetingPackController;
 use App\Http\Controllers\Admin\QaBoardController as AdminQaBoardController;
+
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -194,6 +196,28 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
         ->name('admin.enrollments.updateExamDate');
     Route::post('enrollments/{enrollment}/fail', [EnrollmentManagementController::class, 'fail'])
         ->name('admin.enrollments.fail');
+
+    // 面談パック管理（面談パックマスタの CRUD + 状態遷移、admin のみ）
+    Route::get('meeting-packs', [MeetingPackController::class, 'index'])
+        ->name('admin.meeting-packs.index');
+    Route::get('meeting-packs/create', [MeetingPackController::class, 'create'])
+        ->name('admin.meeting-packs.create');
+    Route::post('meeting-packs', [MeetingPackController::class, 'store'])
+        ->name('admin.meeting-packs.store');
+    Route::get('meeting-packs/{plan}', [MeetingPackController::class, 'show'])
+        ->name('admin.meeting-packs.show');
+    Route::get('meeting-packs/{plan}/edit', [MeetingPackController::class, 'edit'])
+        ->name('admin.meeting-packs.edit');
+    Route::patch('meeting-packs/{plan}', [MeetingPackController::class, 'update'])
+        ->name('admin.meeting-packs.update');
+    Route::delete('meeting-packs/{plan}', [MeetingPackController::class, 'destroy'])
+        ->name('admin.meeting-packs.destroy');
+    Route::post('meeting-packs/{plan}/publish', [MeetingPackController::class, 'publish'])
+        ->name('admin.meeting-packs.publish');
+    Route::post('meeting-packs/{plan}/archive', [MeetingPackController::class, 'archive'])
+        ->name('admin.meeting-packs.archive');
+    Route::post('meeting-packs/{plan}/unarchive', [MeetingPackController::class, 'unarchive'])
+        ->name('admin.meeting-packs.unarchive');
 });
 
 // ============================================================

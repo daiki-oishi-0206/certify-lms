@@ -1,0 +1,42 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\UseCases\MeetingPack;
+
+use App\Enums\MeetingPackStatus;
+use App\Models\MeetingPack;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
+
+/**
+ * 面談パック一覧を検索条件に応じて取得するユースケース。
+ */
+final class IndexAction
+{
+    public function __invoke(
+        ?string $keyword,
+        ?MeetingPackStatus $status,
+        int $perPage = 20,
+    ): LengthAwarePaginator {
+        $query = MeetingPack::query();
+
+        // キーワード検索
+        if ($keyword !== null && $keyword !== '') {
+            $query->where(function (Builder $query) use ($keyword) {
+                $query->where('name', 'like', "%{$keyword}%")
+                    ->orWhere('description', 'like', "%{$keyword}%");
+            });
+        }
+
+        // ステータスによる絞り込み
+        if ($status !== null) {
+            $query->where('status', $status->value);
+        }
+
+        return $query
+            ->ordered()
+            ->paginate($perPage)
+            ->withQueryString();
+    }
+}
